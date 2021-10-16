@@ -74,27 +74,34 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-def searchAndExpand(problem, searchList):
+def searchAndExpand(problem, searchList, priorityFunc = None):
     visited = [] # nodos visitados
 
-    # agregamos a la pila de busqueda el nodo inicial
-    searchList.push((problem.getStartState(), [])) # nodo, las acciones que necesitas para llegar al nodo
+    # agregamos a la lista de busqueda el nodo inicial
+    if (priorityFunc == None ):
+        searchList.push((problem.getStartState(), [])) # nodo, las acciones que necesitas para llegar al nodo en TDA sin prioridad
+    else:
+        searchList.push((problem.getStartState(),[]), priorityFunc(problem.getStartState(), problem, [])) # nodo, las acciones que necesitas para llegar al nodo + call a la funcion que define la prioridad
     visited.append(problem.getStartState())# lo marcamos como visitado
 
     while searchList.isEmpty() == 0:
-        node, actions = searchList.pop() # "agarramos" el ultimo nodo agregado
+        node, actions = searchList.pop() # ultimo nodo agregado
 
         for successor in problem.getSuccessors(node): # pedimos los sucesores posibles del nodo
+            # a cada uno
             position = successor[0]  # par xy
             direction = successor[1] # n, e, s, w
             if position not in visited: # si todavia no visitamos el nodo
-                if problem.isGoalState(position):
-                    print("Goal found!")
+                if problem.isGoalState(position): # es goal
+                    print("Goal found!") 
                     return actions + [direction]  # retornamos todas las acciones que encontramos hasta llegar al goal
                 else:
-                    # no es un objetivo
-                    # lo agregamos a la pila para que sea expandido
-                    searchList.push( (position, actions + [direction]) )
+                    # no es un goal
+                    # lo agregamos a la lista para que sea expandido
+                    if (priorityFunc == None):
+                        searchList.push( (position, actions + [direction]) ) # Pila o cola
+                    else:
+                        searchList.push( (position, actions + [direction]), priorityFunc(position, problem, actions + [direction])) # cola prioridad
                      # lo marcamos como visitado 
                     visited.append( position )
 
@@ -123,11 +130,16 @@ def breadthFirstSearch(problem):
     searchList = util.Queue() # nodos a expandir, en cola FIFO
     return searchAndExpand (problem, searchList)
 
+
+
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    searchList = util.PriorityQueue()
-    util.raiseNotDefined()
+    searchList = util.PriorityQueue() # Nodos a expandir en cola prioridad
+    def ucsPriority(position, problem, actions): 
+        return problem.getCostOfActions(actions)
+    return searchAndExpand (problem, searchList, ucsPriority)
+    # util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
@@ -139,7 +151,12 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    searchList = util.PriorityQueue() # Nodos a expandir en cola prioridad
+
+    def aStarPriority(position, problem, actions): 
+        return problem.getCostOfActions(actions) + heuristic(position, problem)
+
+    return searchAndExpand (problem, searchList, aStarPriority)
 
 
 # Abbreviations
